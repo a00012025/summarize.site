@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>Summarize Options</title>
     <style>
       body {
@@ -64,11 +65,14 @@
     <form>
       <label for="prompt">Prompt to use:</label>
       <input type="text" id="prompt" size="40" value="" />
+      <label for="suffix">Prompt Suffix to use:</label>
+      <input type="text" id="suffix" size="40" value="" />
       <label for="apiKey">OpenAI API Key:</label>
       <input type="text" id="apiKey" size="40" value="" />
       <br />
       <button id="saveButton">Save</button>
-      <button id="resetButton">Reset</button>
+      <button id="resetButton">Reset (English)</button>
+      <button id="resetChineseButton">Reset (Chinese)</button>
       <div id="status"></div>
     </form>
     <script src="options.js"></script>

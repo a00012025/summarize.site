@@ -1,40 +1,28 @@
-const defaultPrompt =
-  "You are acting as a summarization AI, and for the input text please summarize it to the most important 3 to 5 bullet points for brevity: ";
-const defaultAPIKey = "";
+const defaultValues = {
+  prompt:
+    "You are acting as a summarization AI, and for the input text please summarize it to the most important 3 to 5 bullet points for brevity: ",
+  apiKey: "",
+  suffix:
+    "Please briefly summarize it to the most important 3 to 5 bullet points in English.",
+};
+const defaultChineseValues = {
+  prompt:
+    "對於給定的文字給我三到五個最重要的總結，要求簡明扼要不要有多餘的文字，並用中文輸出。輸入開始：",
+  apiKey: "",
+  suffix: "請用中文輸出結果，不要使用英文",
+};
 
-chrome.storage.sync.get("prompt", function (items) {
-  if (items.prompt) {
-    document.getElementById("prompt").value = items.prompt;
-  } else {
-    document.getElementById("prompt").value = defaultPrompt;
-  }
-});
+function setElementValueById(id, value) {
+  document.getElementById(id).value = value;
+}
 
-chrome.storage.sync.get("apiKey", function (items) {
-  if (items.apiKey) {
-    document.getElementById("apiKey").value = items.apiKey;
-  } else {
-    document.getElementById("apiKey").value = defaultAPIKey;
+function setDefaultValues() {
+  for (const k of Object.keys(defaultValues)) {
+    chrome.storage.sync.get(k, function (items) {
+      setElementValueById(k, items[k] || defaultValues[k]);
+    });
   }
-});
-
-chrome.storage.sync.get(
-  {
-    prompt: defaultPrompt,
-  },
-  function (items) {
-    document.getElementById("prompt").value = items.prompt;
-  }
-);
-
-chrome.storage.sync.get(
-  {
-    apiKey: defaultAPIKey,
-  },
-  function (items) {
-    document.getElementById("apiKey").value = items.apiKey;
-  }
-);
+}
 
 function show_save_status() {
   var status = document.getElementById("status");
@@ -44,32 +32,30 @@ function show_save_status() {
   }, 750);
 }
 
-function save_options() {
-  var prompt = document.getElementById("prompt").value;
-  var apiKey = document.getElementById("apiKey").value;
-  chrome.storage.sync.set(
-    {
-      prompt: prompt,
-      apiKey: apiKey,
-    },
-    show_save_status
-  );
+function saveOptions() {
+  let options = {};
+  for (const k of Object.keys(defaultValues)) {
+    options[k] = document.getElementById(k).value;
+  }
+  chrome.storage.sync.set(options, show_save_status);
 }
 
-function restore_options() {
-  chrome.storage.sync.set(
-    {
-      prompt: defaultPrompt,
-      apiKey: defaultAPIKey,
-    },
-    function () {
-      document.getElementById("prompt").value = defaultPrompt;
-      document.getElementById("apiKey").value = defaultAPIKey;
+function restoreOptionsWith(defaults) {
+  return () => {
+    chrome.storage.sync.set(defaults, function () {
+      for (const k of Object.keys(defaults)) {
+        setElementValueById(k, defaults[k]);
+      }
       show_save_status();
-    }
-  );
+    });
+  };
 }
-document.getElementById("saveButton").addEventListener("click", save_options);
+
+setDefaultValues();
+document.getElementById("saveButton").addEventListener("click", saveOptions);
 document
   .getElementById("resetButton")
-  .addEventListener("click", restore_options);
+  .addEventListener("click", restoreOptionsWith(defaultValues));
+document
+  .getElementById("resetChineseButton")
+  .addEventListener("click", restoreOptionsWith(defaultChineseValues));

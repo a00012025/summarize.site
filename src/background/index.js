@@ -7,10 +7,11 @@ const KEY_ACCESS_TOKEN = "accessToken";
 let prompt =
   "You are acting as a summarization AI, and for the input text please summarize it to the most important 3 to 5 bullet points for brevity: ";
 let apiKey = "";
+let suffix = "Please briefly summarize it to the most important 3 to 5 bullet points in English.";
 
 async function getStorageData() {
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(["prompt", "apiKey"], function (items) {
+    chrome.storage.sync.get(["prompt", "apiKey", "suffix"], function (items) {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
@@ -19,6 +20,9 @@ async function getStorageData() {
         }
         if (items && items.apiKey) {
           apiKey = items.apiKey;
+        }
+        if (items && items.suffix) {
+          suffix = items.suffix;
         }
         resolve();
       }
@@ -124,7 +128,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
       let currentSummary = "";
       for (const chunk of chunks) {
-        const gptQuestion = prompt + `\n\n${chunk}`;
+        const gptQuestion = prompt + `\n\n${chunk}` + `\n\n${suffix}`;
         let currentAnswer = "";
         await getSummary(gptQuestion, (answer) => {
           currentAnswer = answer;
