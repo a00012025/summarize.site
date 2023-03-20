@@ -7,14 +7,25 @@ const KEY_ACCESS_TOKEN = "accessToken";
 let prompt =
   "You are acting as a summarization AI, and for the input text please summarize it to the most important 3 to 5 bullet points for brevity: ";
 let apiKey = "";
-chrome.storage.sync.get(["prompt", "apiKey"], function (items) {
-  if (items && items.prompt) {
-    prompt = items.prompt;
-  }
-  if (items && items.apiKey) {
-    apiKey = items.apiKey;
-  }
-});
+
+async function getStorageData() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get(["prompt", "apiKey"], function (items) {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        if (items && items.prompt) {
+          prompt = items.prompt;
+        }
+        if (items && items.apiKey) {
+          apiKey = items.apiKey;
+        }
+        resolve();
+      }
+    });
+  });
+}
+getStorageData();
 
 const cache = new ExpiryMap(10 * 1000);
 
@@ -34,6 +45,7 @@ async function getAccessToken() {
 
 async function getSummary(question, callback) {
   const accessToken = await getAccessToken();
+  await getStorageData();
   // console.log("accessToken", accessToken);
   await fetchSSE("https://chat.openai.com/backend-api/conversation", {
     method: "POST",
@@ -57,14 +69,18 @@ async function getSummary(question, callback) {
       parent_message_id: uuidv4(),
     }),
     onMessage(message) {
-      // console.debug("sse message", message);
+      // console.log("sse message", message);
       if (message === "[DONE]") {
         return;
       }
-      const data = JSON.parse(message);
-      const text = data.message?.content?.parts?.[0];
-      if (text) {
-        callback(text);
+      try {
+        const data = JSON.parse(message);
+        const text = data.message?.content?.parts?.[0];
+        if (text) {
+          callback(text);
+        }
+      } catch (error) {
+        console.error(error);
       }
     },
   });
